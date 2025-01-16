@@ -6,21 +6,21 @@
 #include <windows.h>
 #include <fstream>
 #include <sstream>
-#include "functions.h"
 #include "browserhost.h"
 #include "ListerPlugin.h"
 #include "resource.h"
 #include <ExDispID.h>
-#include "common.h"
 #include <locale>
-#include <fstream>
 #include <iostream>
 #include <vector>
 #include <iterator>
 #include <codecvt>
 #include <algorithm>
 #include <boost/nowide/convert.hpp>
+#include "functions.h"
 #include "TextEncodingDetect/text_encoding_detect.h"
+
+#include "MarkdigProxy/markdown.h"
 
 using namespace AutoIt::Common;
 
@@ -33,22 +33,12 @@ char FileToLoadCopy[MAX_PATH];
 HWND ParentWinCopy;
 int ShowFlagsCopy;
 
-const char* INPUT_STRING;
-const char* SP_INPUT_STRING;
-char* OUTPUT_STRING;
-char* SP_OUTPUT_STRING;
-extern "C" int hoedown_main(int argc, const char **argv);
-extern "C" int smartypants_main(int argc, char **argv);
-extern "C" int smartypants_main_null(int argc, char **argv);
-
 CSmallStringList html_extensions;
 CSmallStringList markdown_extensions;
 CSmallStringList chm_extensions;
 CSmallStringList def_signatures;
 CSmallStringList trans_hotkeys;
 CSmallStringList typing_trans_hotkeys;
-char hoedown_args[512];
-char smartypants_args[512];
 char html_template[512];
 char html_template_dark[512];
 
@@ -107,8 +97,6 @@ void InitProc()
 	if(!trans_hotkeys.valid())
 		trans_hotkeys.load_from_ini(options.IniFileName, "Hotkeys", "TranslationHotkeys");
 	
-	GetPrivateProfileString("Renderer", "HoedownArgs", "", &hoedown_args[0], 512, options.IniFileName);
-	GetPrivateProfileString("Renderer", "UseSmartyPants", "", &smartypants_args[0], 512, options.IniFileName);
 	GetPrivateProfileString("Renderer", "CustomCSS", "", &html_template[0], 512, options.IniFileName);
 	GetPrivateProfileString("Renderer", "CustomCSSDark", "", &html_template_dark[0], 512, options.IniFileName);
 }
@@ -303,13 +291,6 @@ HWND Create_Toolbar(HWND ListWin)
 	SendMessage(toolbar, TB_ADDBUTTONS, 10, (LPARAM)&tb_buttons);
 	SendMessage(toolbar, TB_AUTOSIZE, 0, 0);
 
-	/*
-	RECT rect, toolbar_rect;
-	GetWindowRect(ListWin, &rect); 
-	GetWindowRect(toolbar, &toolbar_rect);
-	MoveWindow(toolbar, 0, 0, rect.right-rect.left, toolbar_rect.bottom-toolbar_rect.top, TRUE);
-	GetWindowRect(toolbar, &toolbar_rect);
-	*/
 	ShowWindow(toolbar, SW_SHOW);
 	return toolbar;
 }
@@ -324,8 +305,6 @@ CComBSTR GetUrlFromFilename(char* FileToLoad)
 		url = FileToLoad;
 	else if( html_extensions.find(ext+1) )
 		url = FileToLoad;
-	else if( chm_extensions.find(ext+1) )
-		url = GetCHMIndex(FileToLoad);
 	else if(def_signatures.check_signature(FileToLoad, options.flags&OPT_SIGNSKIPSPACES))
 		url = FileToLoad;
 	if(url.IsEmpty() || url.Right(3)=="..\\")
@@ -395,11 +374,14 @@ std::string read_file(const char* FileToLoad)
 	auto buffer = read_file_char<char>(FileToLoad);
 
 	TextEncodingDetect::Encoding e = TextEncodingDetect().DetectEncoding((unsigned char*)&buffer[0], buffer.size());
-	if (e == TextEncodingDetect::UTF16_LE_BOM || e == TextEncodingDetect::UTF16_LE_NOBOM ||
-		e == TextEncodingDetect::UTF16_BE_BOM || e == TextEncodingDetect::UTF16_BE_NOBOM)
-	{
-		auto wr = read_file_char<wchar_t>(FileToLoad, e);
-		return boost::nowide::narrow(std::wstring(wr.begin(), wr.end()));
+	switch (e) {
+		case TextEncodingDetect::UTF16_LE_BOM:
+		case TextEncodingDetect::UTF16_LE_NOBOM:
+		case TextEncodingDetect::UTF16_BE_BOM:
+		case TextEncodingDetect::UTF16_BE_NOBOM: {
+			auto wr = read_file_char<wchar_t>(FileToLoad, e);
+			return boost::nowide::narrow(std::wstring(wr.begin(), wr.end()));
+		}
 	}
 
 	return std::string(buffer.begin(), buffer.end());
@@ -408,35 +390,16 @@ std::string read_file(const char* FileToLoad)
 void browser_show_file(CBrowserHost* browser_host, const char* FileToLoad, bool use_dark)
 {
 	std::string utf8_text = read_file(FileToLoad);
-	INPUT_STRING = utf8_text.c_str();
 
 	// we have converted everything to utf8 (but the detector can still return None or ANSI)
 	TextEncodingDetect::Encoding e = TextEncodingDetect().DetectEncoding((unsigned char*)utf8_text.c_str(), utf8_text.size());
 	std::string meta;
-	if (e == TextEncodingDetect::UTF8_BOM || e == TextEncodingDetect::UTF8_NOBOM)
+	if (e == TextEncodingDetect::UTF8_BOM || e == TextEncodingDetect::UTF8_NOBOM) {
 		meta = "<meta charset='utf-8'>";
+	}
 
-	std::vector<std::string> hoedown_args_list;
-	std::istringstream f(hoedown_args);
-	std::string s;
-	while(f >> s) // space-separated list
-		hoedown_args_list.push_back(s); 
+	Markdown md = Markdown();
 	
-	const char* hoedown_argv[512];
-	for (int i = 0; i < hoedown_args_list.size(); ++i)
-		hoedown_argv[i] = hoedown_args_list[i].c_str();
-
-	hoedown_main(hoedown_args_list.size(), hoedown_argv);
-
-	SP_INPUT_STRING = OUTPUT_STRING;
-
-	char* smartypants_argv[] = { "smartypants" };
-	
-	if(smartypants_args[0] == '1')	// should use smartypants
-		smartypants_main(1, smartypants_argv);
-	else
-		smartypants_main_null(1, smartypants_argv);
-
 	CHAR file_path[MAX_PATH];
 	CHAR file_url[MAX_PATH];
 	DWORD path_len = MAX_PATH;
@@ -454,18 +417,15 @@ void browser_show_file(CBrowserHost* browser_host, const char* FileToLoad, bool 
 	strcat(path, css_ptr);
 
 	std::string css(read_file(path));
-	std::string result = "<HTML><HEAD>" + meta + "<base href=\"" +
-						 std::string(file_url) + "\"></base><style>" + 
-						 css + "</style></HEAD><BODY>" +
-						 std::string(SP_OUTPUT_STRING) + 
-						 "</BODY></HTML>";
-
+	std::string result = "<HTML><HEAD>" + meta + 
+		"<base href=\"" + std::string(file_url) + "\"></base>" +
+		"<style>" + css + "</style>"
+		"</HEAD><BODY>" +
+		md.Convert(utf8_text) +
+		"</BODY></HTML>";
 
 	prepare_browser(browser_host);
 	browser_host->LoadWebBrowserFromStreamWrapper(result.c_str()); // utf8
-	
-	free(OUTPUT_STRING);
-	free(SP_OUTPUT_STRING);
 }
 
 bool is_markdown(const char* FileToLoad)

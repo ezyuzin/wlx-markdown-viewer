@@ -5,12 +5,6 @@
 #include <mshtmdid.h>
 #include "functions.h"
 
-extern "C"
-{
-	#include "CHMLIB\chm_lib.h"
-}
-
-
 HINSTANCE hinst = NULL;
 
 SOptions options = {false, 0, 0, 0, 0, 0, "", ""};
@@ -226,72 +220,6 @@ void InitOptions()
 //************************|  Functions  |**************************
 //						  |		        |
 //						  #-------------#
-
-CAtlString GetCHMIndex(char* FileName)
-{
-	CAtlString result;
-	chmFile* ch = chm_open(FileName);
-	if(!ch)
-		return "";
-	result += "mk:@msitstore:";
-	result += FileName;
-	result += "::/";
-	unsigned char* outbuf;
-	LONGINT64 outlen;
-	int res;
-	chmUnitInfo ui;
-	bool found = false;
-	if(!found)
-	{
-		res = chm_resolve_object(ch,"/#WINDOWS",&ui);
-		if(res == CHM_RESOLVE_SUCCESS)
-		{
-			//unsigned long index_offset=0, default_offset=0, home_offset=0;
-			//chm_retrieve_object(ch,&ui,(unsigned char*)&index_offset,0x6C,4);
-			//chm_retrieve_object(ch,&ui,(unsigned char*)&default_offset,0x70,4);
-			//chm_retrieve_object(ch,&ui,(unsigned char*)&home_offset,0x74,4);
-			unsigned long offset;
-			outlen = chm_retrieve_object(ch,&ui,(unsigned char*)&offset,0x70,4);
-
-			if(outlen && offset)
-			{
-				res = chm_resolve_object(ch,"/#STRINGS",&ui);
-				if(res == CHM_RESOLVE_SUCCESS)
-				{
-					outbuf = new unsigned char[255];
-					outlen = chm_retrieve_object(ch,&ui,outbuf,offset,255);
-					result += (char*)outbuf;
-					delete[] outbuf;
-					found = true;
-				}
-			}
-		}
-	}
-	if(!found)
-	{
-		res = chm_resolve_object(ch,"/#SYSTEM",&ui);
-		if(res == CHM_RESOLVE_SUCCESS)
-		{
-			outbuf=new unsigned char[ui.length];
-			outlen=chm_retrieve_object(ch,&ui,outbuf,0,ui.length);
-			unsigned int i=4;
-			if(outlen>4) 
-				while(i<outlen)
-				{
-					if(*(WORD*)(outbuf+i)==2 && *(char*)(outbuf+i+4))
-					{
-						result += (char*)(outbuf+i+4);
-						found=true;
-						break;
-					}
-					i+=*(WORD*)(outbuf+i+2)+4;
-				}
-			delete[] outbuf;
-		}
-	}
-	chm_close(ch);
-	return result;
-}
 
 CAtlString GetKeyName(WORD key)
 {

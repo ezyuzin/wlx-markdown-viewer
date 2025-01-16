@@ -11,8 +11,6 @@
 #include <boost/nowide/convert.hpp>
 
 CBrowserHost::CBrowserHost() :
-	//mFocusWin(NULL),
-	//mLastBookmark(NULL),
 	mImagesHidden(false),
 	mEventsCookie(0),
 	mRefCount(0),

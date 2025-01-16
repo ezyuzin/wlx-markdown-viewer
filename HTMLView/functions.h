@@ -72,7 +72,6 @@ void InitOptions();
 void InitProc();
 HWND GetBrowserHostWnd(HWND child_hwnd);
 CAtlString GetFullKeyName(WORD key);
-CAtlString GetCHMIndex(char* FileName);
 
 int Log(char* Section,char* Text);
 void LogTime(char* Text);

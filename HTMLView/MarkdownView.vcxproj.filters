@@ -21,29 +21,14 @@
     <ClCompile Include="browserhost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ChmLib\chm_lib.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ChmLib\lzx.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="smartypants.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hoedown.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="common.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TextEncodingDetect\text_encoding_detect.cpp">
       <Filter>TextEncodingDetect</Filter>
+    </ClCompile>
+    <ClCompile Include="functions.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -62,9 +47,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextEncodingDetect\text_encoding_detect.h">
