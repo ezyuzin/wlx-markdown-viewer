@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 
@@ -18,12 +20,6 @@ public:
 	~Markdown();
 
 	std::string __stdcall ConvertToHtmlAscii(
-		std::string filename,
-		std::string cssFile,
-		std::string extensions
-	);
-
-	std::wstring __stdcall ConvertToHtml(
 		std::string filename,
 		std::string cssFile,
 		std::string extensions

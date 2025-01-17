@@ -16,7 +16,6 @@
 #include <iterator>
 #include <codecvt>
 #include <algorithm>
-#include <boost/nowide/convert.hpp>
 #include "functions.h"
 
 #include "MarkdigProxy/markdown.h"
@@ -32,16 +31,12 @@ int ShowFlagsCopy;
 
 CSmallStringList html_extensions;
 CSmallStringList markdown_extensions;
-CSmallStringList chm_extensions;
 CSmallStringList def_signatures;
 CSmallStringList trans_hotkeys;
 CSmallStringList typing_trans_hotkeys;
 char html_template[512];
 char html_template_dark[512];
 char renderer_extensions[2048];
-
-static std::wstring wstr(const char* ansi, int length);
-static std::wstring wstr(std::string str);
 
 void RefreshBrowser();
 
@@ -89,8 +84,6 @@ void InitProc()
 		markdown_extensions.load_from_ini(options.IniFileName, "Extensions", "MarkdownExtensions");
 	if(!html_extensions.valid())
 		html_extensions.load_from_ini(options.IniFileName, "Extensions", "HTMLExtensions");
-	if(!chm_extensions.valid())
-		chm_extensions.load_from_ini(options.IniFileName, "Extensions", "CHMExtensions");
 	if(!def_signatures.valid())
 		def_signatures.load_sign_from_ini(options.IniFileName, "Extensions", "DefaultSignatures");
 	if(!typing_trans_hotkeys.valid())
@@ -314,12 +307,6 @@ CComBSTR GetUrlFromFilename(char* FileToLoad)
 	return CComBSTR(url);
 }
 
-//							#------------#
-//  						|	  	     |
-//**************************|   Lister   |***************************
-//							|		     |
-//							#------------#
-
 void do_events()
 {
 	MSG msg;
@@ -359,48 +346,20 @@ void prepare_browser(CBrowserHost* browser_host)
 	} while (rs != READYSTATE_COMPLETE);
 }
 
-void browser_show_file(CBrowserHost* browser_host, const char* filename, bool use_dark)
+void browser_show_file(CBrowserHost* browserHost, const char* filename, bool useDarkTheme)
 {
-	CHAR file_path[MAX_PATH];
-	CHAR file_url[MAX_PATH];
-	DWORD path_len = MAX_PATH;
-	const char* css_ptr = use_dark ? html_template_dark : html_template;
-	strcpy(file_path, filename);
-
-	PathRemoveFileSpec(file_path);	// no file name, no trailing slash
-	UrlCreateFromPath(file_path, file_url, &path_len, NULL);
-	strcat(file_url, "/");
-
-	// read HTML template
-	CHAR path[MAX_PATH];
-	GetModuleFileName(hinst, path, MAX_PATH);
-	PathRemoveFileSpec(path);
-	strcat(path, "\\");
-	strcat(path, css_ptr);
+	CHAR css[MAX_PATH];
+	GetModuleFileName(hinst, css, MAX_PATH);
+	PathRemoveFileSpec(css);
+	strcat(css, "\\");
+	strcat(css, useDarkTheme ? html_template_dark : html_template);
 
 	Markdown md = Markdown();
-	//std::wstring html = md.ConvertToHtml(std::string(filename), std::string(path), std::string(renderer_extensions));
-	std::string html = md.ConvertToHtmlAscii(std::string(filename), std::string(path), std::string(renderer_extensions));
+	std::string html = md.ConvertToHtmlAscii(std::string(filename), std::string(css), std::string(renderer_extensions));
 
-	prepare_browser(browser_host);
-	browser_host->LoadWebBrowserFromStreamWrapper((const BYTE*)html.c_str(), html.length());
+	prepare_browser(browserHost);
+	browserHost->LoadWebBrowserFromStreamWrapper((const BYTE*)html.c_str(), html.length());
 }
-
-static std::wstring wstr(const char *ansi, int length) {
-	int len;
-	len = MultiByteToWideChar(CP_UTF8, 0, ansi, length + 1, 0, 0);
-	wchar_t* buf = new wchar_t[len];
-	MultiByteToWideChar(CP_UTF8, 0, ansi, length + 1, buf, len);
-	std::wstring r(buf);
-	delete[] buf;
-	return r;
-}
-
-
-static std::wstring wstr(std::string str) {
-	return wstr(str.c_str(), str.length());
-}
-
 
 bool is_markdown(const char* FileToLoad)
 {
@@ -431,7 +390,6 @@ int __stdcall ListLoadNext(HWND ParentWin, HWND PluginWin, char* FileToLoad, int
 
 	return LISTPLUGIN_OK;
 }
-
 
 HWND __stdcall ListLoad(HWND ParentWin, char* FileToLoad, int ShowFlags)
 {
@@ -539,16 +497,7 @@ int __stdcall ListPrint(HWND ListWin,char* FileToPrint,char* DefPrinter,int Prin
 	return LISTPLUGIN_OK;
 }
 
-//							#---------#
-//							|		  |
-//**************************|   DLL   |***************************
-//							|		  |
-//							#---------#
-
-BOOL APIENTRY DllMain( HANDLE hModule, 
-					  DWORD  reason_for_call, 
-					  LPVOID lpReserved
-					  )
+BOOL APIENTRY DllMain( HANDLE hModule, DWORD  reason_for_call, LPVOID lpReserved)
 {
 	if(reason_for_call==DLL_PROCESS_ATTACH)
 	{

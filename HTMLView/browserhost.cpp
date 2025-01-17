@@ -8,7 +8,6 @@
 
 #include "browserhost.h"
 #include "functions.h"
-#include <boost/nowide/convert.hpp>
 
 CBrowserHost::CBrowserHost() :
 	mImagesHidden(false),
