@@ -3,6 +3,7 @@ bin/
 lib/
 Debug/
 Release/
+ReleaseWLX/
 x64/
 .vs/
 *.vcxproj.user

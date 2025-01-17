@@ -16,5 +16,16 @@ class EXPORT Markdown {
 public:
 	Markdown();
 	~Markdown();
-	std::string __stdcall Convert(std::string content);
+
+	std::string __stdcall ConvertToHtmlAscii(
+		std::string filename,
+		std::string cssFile,
+		std::string extensions
+	);
+
+	std::wstring __stdcall ConvertToHtml(
+		std::string filename,
+		std::string cssFile,
+		std::string extensions
+	);
 };

@@ -915,10 +915,10 @@ DWORD WINAPI NewWindowThreadFunc(LPVOID param)
 
 #include <strsafe.h>
 
-void CBrowserHost::LoadWebBrowserFromStreamWrapper(const char* html)
+void CBrowserHost::LoadWebBrowserFromStreamWrapper(const BYTE* html, int length)
 {
 	IStream* pStream = NULL;
-	pStream = SHCreateMemStream((const BYTE*)html, strlen(html) + 1);
+	pStream = SHCreateMemStream(html, length + 1);
 
 	IDispatch* pHtmlDoc = NULL;
 	IPersistStreamInit* pPersistStreamInit = NULL;

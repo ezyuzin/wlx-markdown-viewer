@@ -1,20 +1,20 @@
-# WLX Markdown Viewer
-
-HTML + Markdown lister plugin for Total Commander (32/64-bit version)
+# Markdown Lister Plugin for Total Commander (32/64-bit version)
 
 Based on [wlx-markdown-viewer plugin](https://github.com/rg-software/wlx-markdown-viewer), 
 and upgraded for displays Markdown files via [Markdig Markdown Processor](https://github.com/xoofx/markdig), which support modern markdown syntax.
-
-Markdown rendering should work reliably for UTF-8 and UTF-16 encoded files (file format is detected with [text-encoding-detect](https://github.com/AutoItConsulting/text-encoding-detect)). For other encodings, Internet Explorer-based autodetection is used, so results may vary.
 
 [Markdig Markdown Processor](https://github.com/xoofx/markdig) is dotnet library, so dotnet core 8.0 is required to be installed.
 
 ## Fine Tuning
 
 Plugin configuration is specified in `MarkdownView.ini`. Markdown-related settings are:
+ 
+- `Extensions: MarkdownExtensions` file extensions recognized by the plugin as markdown files.
 
-* `MarkdownExtensions`: file extensions recognized by the plugin as markdown files.
-* `CustomCSS`: a path to a CSS sheet for customizing the resulting look of the document. A collection of four sheets from [Markdown CSS](https://markdowncss.github.io/) and six Github-inspired sheets courtesy of S.&nbsp;Kuznetsov is included into the package.
+- `Renderer: Extensions` A collection of extensions for Markdig Markdown Processor. [Read to markdig extensions features block](https://github.com/xoofx/markdig/blob/master/readme.md)  
+  Follow extensions are supported: common, advanced, alerts, pipetables, gfm-pipetables, emphasisextras, listextras, hardlinebreak, footnotes, footers, citations, attributes, gridtables, abbreviations, emojis, definitionlists, customcontainers, figures, mathematics, bootstrap, medialinks, smartypants, autoidentifiers, tasklists, diagrams, nofollowlinks, noopenerlinks, noreferrerlinks, nohtml, yaml, nonascii-noescape, autolinks, globalization
+
+- `Renderer: CustomCSS` a path to a CSS sheet for customizing the resulting look of the document. A collection of four sheets from [Markdown CSS](https://markdowncss.github.io/) and six Github-inspired sheets courtesy of S.&nbsp;Kuznetsov is included into the package.
 
 ## Internet Explorer Update
 

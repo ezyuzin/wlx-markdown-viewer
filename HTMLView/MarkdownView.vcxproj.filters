@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="TextEncodingDetect">
-      <UniqueIdentifier>{4cbfa8d9-bbfb-409d-b8db-7ed14b84010e}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="browserhost.cpp">
@@ -23,9 +20,6 @@
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TextEncodingDetect\text_encoding_detect.cpp">
-      <Filter>TextEncodingDetect</Filter>
     </ClCompile>
     <ClCompile Include="functions.cpp">
       <Filter>Source Files</Filter>
@@ -48,9 +42,6 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TextEncodingDetect\text_encoding_detect.h">
-      <Filter>TextEncodingDetect</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

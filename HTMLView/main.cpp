@@ -18,11 +18,8 @@
 #include <algorithm>
 #include <boost/nowide/convert.hpp>
 #include "functions.h"
-#include "TextEncodingDetect/text_encoding_detect.h"
 
 #include "MarkdigProxy/markdown.h"
-
-using namespace AutoIt::Common;
 
 HHOOK hook_keyb = NULL;
 HIMAGELIST img_list = NULL;
@@ -41,6 +38,10 @@ CSmallStringList trans_hotkeys;
 CSmallStringList typing_trans_hotkeys;
 char html_template[512];
 char html_template_dark[512];
+char renderer_extensions[2048];
+
+static std::wstring wstr(const char* ansi, int length);
+static std::wstring wstr(std::string str);
 
 void RefreshBrowser();
 
@@ -97,6 +98,7 @@ void InitProc()
 	if(!trans_hotkeys.valid())
 		trans_hotkeys.load_from_ini(options.IniFileName, "Hotkeys", "TranslationHotkeys");
 	
+	GetPrivateProfileString("Renderer", "Extensions", "", &renderer_extensions[0], 2048, options.IniFileName);
 	GetPrivateProfileString("Renderer", "CustomCSS", "", &html_template[0], 512, options.IniFileName);
 	GetPrivateProfileString("Renderer", "CustomCSSDark", "", &html_template_dark[0], 512, options.IniFileName);
 }
@@ -357,54 +359,14 @@ void prepare_browser(CBrowserHost* browser_host)
 	} while (rs != READYSTATE_COMPLETE);
 }
 
-template<typename T> std::vector<T> read_file_char(const char* FileToLoad, TextEncodingDetect::Encoding e = TextEncodingDetect::None)
+void browser_show_file(CBrowserHost* browser_host, const char* filename, bool use_dark)
 {
-	std::basic_ifstream<T> in(FileToLoad, std::ios::binary);
-
-	if(e == TextEncodingDetect::UTF16_LE_BOM || e == TextEncodingDetect::UTF16_BE_BOM)
-		in.imbue(std::locale(in.getloc(), new std::codecvt_utf16<wchar_t, 0x10ffff, std::consume_header>));
-
-	std::istreambuf_iterator<T> it(in);
-
-	return std::vector<T>(it, {});
-}
-
-std::string read_file(const char* FileToLoad)
-{
-	auto buffer = read_file_char<char>(FileToLoad);
-
-	TextEncodingDetect::Encoding e = TextEncodingDetect().DetectEncoding((unsigned char*)&buffer[0], buffer.size());
-	switch (e) {
-		case TextEncodingDetect::UTF16_LE_BOM:
-		case TextEncodingDetect::UTF16_LE_NOBOM:
-		case TextEncodingDetect::UTF16_BE_BOM:
-		case TextEncodingDetect::UTF16_BE_NOBOM: {
-			auto wr = read_file_char<wchar_t>(FileToLoad, e);
-			return boost::nowide::narrow(std::wstring(wr.begin(), wr.end()));
-		}
-	}
-
-	return std::string(buffer.begin(), buffer.end());
-}
-
-void browser_show_file(CBrowserHost* browser_host, const char* FileToLoad, bool use_dark)
-{
-	std::string utf8_text = read_file(FileToLoad);
-
-	// we have converted everything to utf8 (but the detector can still return None or ANSI)
-	TextEncodingDetect::Encoding e = TextEncodingDetect().DetectEncoding((unsigned char*)utf8_text.c_str(), utf8_text.size());
-	std::string meta;
-	if (e == TextEncodingDetect::UTF8_BOM || e == TextEncodingDetect::UTF8_NOBOM) {
-		meta = "<meta charset='utf-8'>";
-	}
-
-	Markdown md = Markdown();
-	
 	CHAR file_path[MAX_PATH];
 	CHAR file_url[MAX_PATH];
 	DWORD path_len = MAX_PATH;
 	const char* css_ptr = use_dark ? html_template_dark : html_template;
-	strcpy(file_path, FileToLoad);
+	strcpy(file_path, filename);
+
 	PathRemoveFileSpec(file_path);	// no file name, no trailing slash
 	UrlCreateFromPath(file_path, file_url, &path_len, NULL);
 	strcat(file_url, "/");
@@ -416,17 +378,29 @@ void browser_show_file(CBrowserHost* browser_host, const char* FileToLoad, bool 
 	strcat(path, "\\");
 	strcat(path, css_ptr);
 
-	std::string css(read_file(path));
-	std::string result = "<HTML><HEAD>" + meta + 
-		"<base href=\"" + std::string(file_url) + "\"></base>" +
-		"<style>" + css + "</style>"
-		"</HEAD><BODY>" +
-		md.Convert(utf8_text) +
-		"</BODY></HTML>";
+	Markdown md = Markdown();
+	//std::wstring html = md.ConvertToHtml(std::string(filename), std::string(path), std::string(renderer_extensions));
+	std::string html = md.ConvertToHtmlAscii(std::string(filename), std::string(path), std::string(renderer_extensions));
 
 	prepare_browser(browser_host);
-	browser_host->LoadWebBrowserFromStreamWrapper(result.c_str()); // utf8
+	browser_host->LoadWebBrowserFromStreamWrapper((const BYTE*)html.c_str(), html.length());
 }
+
+static std::wstring wstr(const char *ansi, int length) {
+	int len;
+	len = MultiByteToWideChar(CP_UTF8, 0, ansi, length + 1, 0, 0);
+	wchar_t* buf = new wchar_t[len];
+	MultiByteToWideChar(CP_UTF8, 0, ansi, length + 1, buf, len);
+	std::wstring r(buf);
+	delete[] buf;
+	return r;
+}
+
+
+static std::wstring wstr(std::string str) {
+	return wstr(str.c_str(), str.length());
+}
+
 
 bool is_markdown(const char* FileToLoad)
 {

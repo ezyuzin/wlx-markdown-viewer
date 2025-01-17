@@ -106,6 +106,5 @@ public:
     HRESULT STDMETHODCALLTYPE Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
                                      DISPPARAMS FAR* pDispParams, VARIANT FAR* parResult,
                                      EXCEPINFO FAR* pExcepInfo, unsigned int FAR* puArgErr);
-	void LoadWebBrowserFromStreamWrapper(const char* html);
-	//HRESULT LoadWebBrowserFromStream(IStream* pStream);
+	void LoadWebBrowserFromStreamWrapper(const BYTE* html, int length);
 };

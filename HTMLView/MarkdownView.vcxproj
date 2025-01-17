@@ -220,7 +220,6 @@
     <ClCompile Include="browserhost.cpp" />
     <ClCompile Include="functions.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="TextEncodingDetect\text_encoding_detect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="htmlview.def" />
@@ -230,7 +229,6 @@
     <ClInclude Include="functions.h" />
     <ClInclude Include="listerplugin.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="TextEncodingDetect\text_encoding_detect.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HTMLView.rc" />
